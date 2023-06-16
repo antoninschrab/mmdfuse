@@ -100,9 +100,9 @@ Inria London
   author        = {Felix Biggs, Antonin Schrab and Arthur Gretton},
   title         = {{MMD-FUSE}: {L}earning and Combining Kernels for Two-Sample Testing Without Data Splitting},
   year          = {2023},
-  eprint        = {XXXX.XXXXX},
+  eprint        = {2306.08777},
   archivePrefix = {arXiv},
-  url           = {https://arxiv.org/abs/XXXX.XXXXX},
+  url           = {https://arxiv.org/abs/2306.08777},
 }
 ```
 
