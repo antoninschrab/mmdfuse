@@ -1,6 +1,6 @@
 import jax
 import jax.numpy as jnp
-from jax import random, jit
+from jax import random, jit, vmap
 from functools import partial
 from jax.scipy.special import logsumexp
 from kernel import jax_distances, kernel_matrix
@@ -253,4 +253,79 @@ def mmdfuse(
     else:
         return output.astype(int)
 
+
+def kernel_matrix(pairwise_matrix, l, kernel, bandwidth, rq_kernel_exponent=0.5):
+    """
+    Compute kernel matrix for a given kernel and bandwidth.
+
+    inputs: pairwise_matrix: (2m,2m) matrix of pairwise distances
+            l: "l1" or "l2" or "l2sq"
+            kernel: string from ("gaussian", "laplace", "imq", "matern_0.5_l1", "matern_1.5_l1", "matern_2.5_l1", "matern_3.5_l1", "matern_4.5_l1", "matern_0.5_l2", "matern_1.5_l2", "matern_2.5_l2", "matern_3.5_l2", "matern_4.5_l2")
+    output: (2m,2m) pairwise distance matrix
+
+    Warning: The pair of variables l and kernel must be valid.
+    """
+    d = pairwise_matrix / bandwidth
+    if kernel == "gaussian" and l == "l2":
+        return jnp.exp(-(d**2) / 2)
+    elif kernel == "laplace" and l == "l1":
+        return jnp.exp(-d * jnp.sqrt(2))
+    elif kernel == "rq" and l == "l2":
+        return (1 + d**2 / (2 * rq_kernel_exponent)) ** (-rq_kernel_exponent)
+    elif kernel == "imq" and l == "l2":
+        return (1 + d**2) ** (-0.5)
+    elif (kernel == "matern_0.5_l1" and l == "l1") or (
+        kernel == "matern_0.5_l2" and l == "l2"
+    ):
+        return jnp.exp(-d)
+    elif (kernel == "matern_1.5_l1" and l == "l1") or (
+        kernel == "matern_1.5_l2" and l == "l2"
+    ):
+        return (1 + jnp.sqrt(3) * d) * jnp.exp(-jnp.sqrt(3) * d)
+    elif (kernel == "matern_2.5_l1" and l == "l1") or (
+        kernel == "matern_2.5_l2" and l == "l2"
+    ):
+        return (1 + jnp.sqrt(5) * d + 5 / 3 * d**2) * jnp.exp(-jnp.sqrt(5) * d)
+    elif (kernel == "matern_3.5_l1" and l == "l1") or (
+        kernel == "matern_3.5_l2" and l == "l2"
+    ):
+        return (
+            1 + jnp.sqrt(7) * d + 2 * 7 / 5 * d**2 + 7 * jnp.sqrt(7) / 3 / 5 * d**3
+        ) * jnp.exp(-jnp.sqrt(7) * d)
+    elif (kernel == "matern_4.5_l1" and l == "l1") or (
+        kernel == "matern_4.5_l2" and l == "l2"
+    ):
+        return (
+            1
+            + 3 * d
+            + 3 * (6**2) / 28 * d**2
+            + (6**3) / 84 * d**3
+            + (6**4) / 1680 * d**4
+        ) * jnp.exp(-3 * d)
+    else:
+        raise ValueError('The values of "l" and "kernel" are not valid.')
+
+
+def jax_distances(X, Y, l, max_samples=None, matrix=False):
+    if l == "l1":
+
+        def dist(x, y):
+            z = x - y
+            return jnp.sum(jnp.abs(z))
+
+    elif l == "l2":
+
+        def dist(x, y):
+            z = x - y
+            return jnp.sqrt(jnp.sum(jnp.square(z)))
+
+    else:
+        raise ValueError("Value of 'l' must be either 'l1' or 'l2'.")
+    vmapped_dist = vmap(dist, in_axes=(0, None))
+    pairwise_dist = vmap(vmapped_dist, in_axes=(None, 0))
+    output = pairwise_dist(X[:max_samples], Y[:max_samples])
+    if matrix:
+        return output
+    else:
+        return output[jnp.triu_indices(output.shape[0])]
 
