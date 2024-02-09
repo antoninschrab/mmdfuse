@@ -96,13 +96,12 @@ Inria London
 ## Bibtex
 
 ```
-@unpublished{biggs2023mmdfuse,
-  author        = {Felix Biggs, Antonin Schrab and Arthur Gretton},
+@article{biggs2023mmdfuse,
+  author        = {Biggs, Felix and Schrab, Antonin and Gretton, Arthur},
   title         = {{MMD-FUSE}: {L}earning and Combining Kernels for Two-Sample Testing Without Data Splitting},
   year          = {2023},
-  eprint        = {2306.08777},
-  archivePrefix = {arXiv},
-  url           = {https://arxiv.org/abs/2306.08777},
+  journal       = {Advances in Neural Information Processing Systems},
+  volume        = {36}
 }
 ```
 
