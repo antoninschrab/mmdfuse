@@ -3,7 +3,6 @@ import jax.numpy as jnp
 from jax import random, jit, vmap
 from functools import partial
 from jax.scipy.special import logsumexp
-from kernel import jax_distances, kernel_matrix
 
 
 @partial(jit, static_argnums=(3, 4, 5, 6, 7, 8))
